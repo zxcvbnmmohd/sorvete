@@ -1,0 +1,325 @@
+# ============================================================================
+# Dev-mode override for docker-compose.yml.
+#
+# Use alongside the base compose:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d \
+#       <svc>-server <svc>-postgres ...
+#
+# (or via scripts/dev_all.sh, which composes both files automatically)
+#
+# Each backend in this file:
+#   • Overrides the GHCR image with the local dev runtime
+#     (sorvete-dev-server:local — see .docker/Dockerfile.server.dev)
+#   • Bind-mounts host source so edits take effect without rebuild
+#   • Runs the JIT watcher that restarts the Dart process on file change
+#
+# Postgres containers are NOT overridden — same image, same volumes, same
+# healthchecks as production.
+#
+# NOTE: workspace `.dart_tool/` is hidden by an anonymous volume so the
+# container's resolved package config doesn't collide with the host's
+# (different Dart versions, different paths).
+# ============================================================================
+
+name: sorvete
+
+x-dev-backend: &dev-backend
+  image: sorvete-dev-server:local
+  pull_policy: never
+  restart: unless-stopped
+  environment:
+    runmode: production
+    SERVERPOD_PASSWORD_database: ${DB_PASSWORD:?DB_PASSWORD must be set}
+
+services:
+  ads-server:
+    <<: *dev-backend
+    ports:
+      - "8100:8080"
+    volumes:
+      - ./services/ads/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  analytics-server:
+    <<: *dev-backend
+    ports:
+      - "8101:8080"
+    volumes:
+      - ./services/analytics/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  audit-server:
+    <<: *dev-backend
+    ports:
+      - "8102:8080"
+    volumes:
+      - ./services/audit/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  catalog-server:
+    <<: *dev-backend
+    ports:
+      - "8103:8080"
+    volumes:
+      - ./services/catalog/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  config-server:
+    <<: *dev-backend
+    ports:
+      - "8104:8080"
+    volumes:
+      - ./services/config/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  device-server:
+    <<: *dev-backend
+    ports:
+      - "8105:8080"
+    volumes:
+      - ./services/device/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  disputes-server:
+    <<: *dev-backend
+    ports:
+      - "8106:8080"
+    volumes:
+      - ./services/disputes/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  fulfillment-server:
+    <<: *dev-backend
+    ports:
+      - "8107:8080"
+    volumes:
+      - ./services/fulfillment/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  geo-server:
+    <<: *dev-backend
+    ports:
+      - "8108:8080"
+    volumes:
+      - ./services/geo/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  gift_cards-server:
+    <<: *dev-backend
+    ports:
+      - "8109:8080"
+    volumes:
+      - ./services/gift_cards/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  identity-server:
+    <<: *dev-backend
+    ports:
+      - "8110:8080"
+    volumes:
+      - ./services/identity/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  inventory-server:
+    <<: *dev-backend
+    ports:
+      - "8111:8080"
+    volumes:
+      - ./services/inventory/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  kitchen-server:
+    <<: *dev-backend
+    ports:
+      - "8112:8080"
+    volumes:
+      - ./services/kitchen/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  kyc-server:
+    <<: *dev-backend
+    ports:
+      - "8113:8080"
+    volumes:
+      - ./services/kyc/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  loyalty-server:
+    <<: *dev-backend
+    ports:
+      - "8114:8080"
+    volumes:
+      - ./services/loyalty/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  marketing-server:
+    <<: *dev-backend
+    ports:
+      - "8115:8080"
+    volumes:
+      - ./services/marketing/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  media-server:
+    <<: *dev-backend
+    ports:
+      - "8116:8080"
+    volumes:
+      - ./services/media/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  merchant-server:
+    <<: *dev-backend
+    ports:
+      - "8117:8080"
+    volumes:
+      - ./services/merchant/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  notifications-server:
+    <<: *dev-backend
+    ports:
+      - "8118:8080"
+    volumes:
+      - ./services/notifications/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  ordering-server:
+    <<: *dev-backend
+    ports:
+      - "8119:8080"
+    volumes:
+      - ./services/ordering/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  payments-server:
+    <<: *dev-backend
+    ports:
+      - "8120:8080"
+    volumes:
+      - ./services/payments/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  payouts-server:
+    <<: *dev-backend
+    ports:
+      - "8121:8080"
+    volumes:
+      - ./services/payouts/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  pricing-server:
+    <<: *dev-backend
+    ports:
+      - "8122:8080"
+    volumes:
+      - ./services/pricing/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  promotions-server:
+    <<: *dev-backend
+    ports:
+      - "8123:8080"
+    volumes:
+      - ./services/promotions/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  recommendations-server:
+    <<: *dev-backend
+    ports:
+      - "8124:8080"
+    volumes:
+      - ./services/recommendations/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  reservations-server:
+    <<: *dev-backend
+    ports:
+      - "8125:8080"
+    volumes:
+      - ./services/reservations/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  reviews-server:
+    <<: *dev-backend
+    ports:
+      - "8126:8080"
+    volumes:
+      - ./services/reviews/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  risk-server:
+    <<: *dev-backend
+    ports:
+      - "8127:8080"
+    volumes:
+      - ./services/risk/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  search-server:
+    <<: *dev-backend
+    ports:
+      - "8128:8080"
+    volumes:
+      - ./services/search/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  support-server:
+    <<: *dev-backend
+    ports:
+      - "8129:8080"
+    volumes:
+      - ./services/support/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  wallet-server:
+    <<: *dev-backend
+    ports:
+      - "8130:8080"
+    volumes:
+      - ./services/wallet/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+  webhooks-server:
+    <<: *dev-backend
+    ports:
+      - "8131:8080"
+    volumes:
+      - ./services/webhooks/server:/app/server:cached
+      - pub_cache:/root/.pub-cache
+      - /app/server/.dart_tool
+
+
+volumes:
+  pub_cache:

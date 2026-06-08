@@ -1,0 +1,83 @@
+name: sorvete_backend
+description: Single backend SDK — bundles all 32 Serverpod typed clients so apps depend on ONE package instead of 32. Exposes a `SorveteClients` aggregator + per-service re-export shims for type access.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  serverpod_client: 3.4.9
+  http: ^1.6.0
+  uuid: ^4.5.1
+  ads_client:
+    path: ../../services/ads/client
+  analytics_client:
+    path: ../../services/analytics/client
+  audit_client:
+    path: ../../services/audit/client
+  catalog_client:
+    path: ../../services/catalog/client
+  config_client:
+    path: ../../services/config/client
+  device_client:
+    path: ../../services/device/client
+  disputes_client:
+    path: ../../services/disputes/client
+  fulfillment_client:
+    path: ../../services/fulfillment/client
+  geo_client:
+    path: ../../services/geo/client
+  gift_cards_client:
+    path: ../../services/gift_cards/client
+  identity_client:
+    path: ../../services/identity/client
+  inventory_client:
+    path: ../../services/inventory/client
+  kitchen_client:
+    path: ../../services/kitchen/client
+  kyc_client:
+    path: ../../services/kyc/client
+  loyalty_client:
+    path: ../../services/loyalty/client
+  marketing_client:
+    path: ../../services/marketing/client
+  media_client:
+    path: ../../services/media/client
+  merchant_client:
+    path: ../../services/merchant/client
+  notifications_client:
+    path: ../../services/notifications/client
+  ordering_client:
+    path: ../../services/ordering/client
+  payments_client:
+    path: ../../services/payments/client
+  payouts_client:
+    path: ../../services/payouts/client
+  pricing_client:
+    path: ../../services/pricing/client
+  promotions_client:
+    path: ../../services/promotions/client
+  recommendations_client:
+    path: ../../services/recommendations/client
+  reservations_client:
+    path: ../../services/reservations/client
+  reviews_client:
+    path: ../../services/reviews/client
+  risk_client:
+    path: ../../services/risk/client
+  search_client:
+    path: ../../services/search/client
+  support_client:
+    path: ../../services/support/client
+  wallet_client:
+    path: ../../services/wallet/client
+  webhooks_client:
+    path: ../../services/webhooks/client
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

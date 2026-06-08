@@ -1,0 +1,543 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "app (native)",
+      "cwd": "apps/${input:app}",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--${input:mode}",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "admin (web :5001)",
+      "cwd": "apps/admin",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5001",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "customer (web :5002)",
+      "cwd": "apps/customer",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5002",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "driver (web :5003)",
+      "cwd": "apps/driver",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5003",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "merchant (web :5004)",
+      "cwd": "apps/merchant",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5004",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "pos (web :5005)",
+      "cwd": "apps/pos",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5005",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "kds (web :5006)",
+      "cwd": "apps/kds",
+      "program": "lib/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--web-port=5006",
+        "--web-hostname=0.0.0.0",
+        "--dart-define=FLAVOR=${input:flavor}"
+      ]
+    },
+    {
+      "name": "ads_server",
+      "cwd": "services/ads/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:ads",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "analytics_server",
+      "cwd": "services/analytics/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:analytics",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "audit_server",
+      "cwd": "services/audit/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:audit",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "catalog_server",
+      "cwd": "services/catalog/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:catalog",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "config_server",
+      "cwd": "services/config/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:config",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "device_server",
+      "cwd": "services/device/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:device",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "disputes_server",
+      "cwd": "services/disputes/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:disputes",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "fulfillment_server",
+      "cwd": "services/fulfillment/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:fulfillment",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "geo_server",
+      "cwd": "services/geo/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:geo",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "gift_cards_server",
+      "cwd": "services/gift_cards/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:gift_cards",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "identity_server",
+      "cwd": "services/identity/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:identity",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "inventory_server",
+      "cwd": "services/inventory/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:inventory",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "kitchen_server",
+      "cwd": "services/kitchen/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:kitchen",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "kyc_server",
+      "cwd": "services/kyc/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:kyc",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "loyalty_server",
+      "cwd": "services/loyalty/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:loyalty",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "marketing_server",
+      "cwd": "services/marketing/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:marketing",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "media_server",
+      "cwd": "services/media/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:media",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "merchant_server",
+      "cwd": "services/merchant/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:merchant",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "notifications_server",
+      "cwd": "services/notifications/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:notifications",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "ordering_server",
+      "cwd": "services/ordering/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:ordering",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "payments_server",
+      "cwd": "services/payments/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:payments",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "payouts_server",
+      "cwd": "services/payouts/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:payouts",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "pricing_server",
+      "cwd": "services/pricing/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:pricing",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "promotions_server",
+      "cwd": "services/promotions/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:promotions",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "recommendations_server",
+      "cwd": "services/recommendations/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:recommendations",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "reservations_server",
+      "cwd": "services/reservations/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:reservations",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "reviews_server",
+      "cwd": "services/reviews/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:reviews",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "risk_server",
+      "cwd": "services/risk/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:risk",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "search_server",
+      "cwd": "services/search/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:search",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "support_server",
+      "cwd": "services/support/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:support",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "wallet_server",
+      "cwd": "services/wallet/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:wallet",
+      "args": [
+        "--apply-migrations"
+      ]
+    },
+    {
+      "name": "webhooks_server",
+      "cwd": "services/webhooks/server",
+      "program": "bin/main.dart",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "service:up:webhooks",
+      "args": [
+        "--apply-migrations"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "All Apps \u2014 Web",
+      "configurations": [
+        "admin (web :5001)",
+        "customer (web :5002)",
+        "driver (web :5003)",
+        "merchant (web :5004)",
+        "pos (web :5005)",
+        "kds (web :5006)"
+      ],
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "app",
+      "type": "pickString",
+      "description": "App",
+      "options": [
+        "admin",
+        "customer",
+        "driver",
+        "merchant",
+        "pos",
+        "kds"
+      ],
+      "default": "customer"
+    },
+    {
+      "id": "flavor",
+      "type": "pickString",
+      "description": "Flavor",
+      "options": [
+        "dev",
+        "prod"
+      ],
+      "default": "dev"
+    },
+    {
+      "id": "mode",
+      "type": "pickString",
+      "description": "Build mode",
+      "options": [
+        "debug",
+        "profile",
+        "release"
+      ],
+      "default": "debug"
+    },
+    {
+      "id": "service",
+      "type": "pickString",
+      "description": "Service",
+      "options": [
+        "ads",
+        "analytics",
+        "audit",
+        "catalog",
+        "config",
+        "device",
+        "disputes",
+        "fulfillment",
+        "geo",
+        "gift_cards",
+        "identity",
+        "inventory",
+        "kitchen",
+        "kyc",
+        "loyalty",
+        "marketing",
+        "media",
+        "merchant",
+        "notifications",
+        "ordering",
+        "payments",
+        "payouts",
+        "pricing",
+        "promotions",
+        "recommendations",
+        "reservations",
+        "reviews",
+        "risk",
+        "search",
+        "support",
+        "wallet",
+        "webhooks"
+      ],
+      "default": "identity"
+    }
+  ]
+}

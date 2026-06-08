@@ -1,0 +1,506 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "serve-all: start",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_all.sh"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "serve-all: stop",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_all.sh",
+        "stop"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:ads",
+      "detail": "docker compose up + wait for Postgres for ads_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "ads"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:analytics",
+      "detail": "docker compose up + wait for Postgres for analytics_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "analytics"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:audit",
+      "detail": "docker compose up + wait for Postgres for audit_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "audit"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:catalog",
+      "detail": "docker compose up + wait for Postgres for catalog_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "catalog"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:config",
+      "detail": "docker compose up + wait for Postgres for config_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "config"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:device",
+      "detail": "docker compose up + wait for Postgres for device_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "device"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:disputes",
+      "detail": "docker compose up + wait for Postgres for disputes_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "disputes"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:fulfillment",
+      "detail": "docker compose up + wait for Postgres for fulfillment_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "fulfillment"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:geo",
+      "detail": "docker compose up + wait for Postgres for geo_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "geo"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:gift_cards",
+      "detail": "docker compose up + wait for Postgres for gift_cards_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "gift_cards"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:identity",
+      "detail": "docker compose up + wait for Postgres for identity_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "identity"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:inventory",
+      "detail": "docker compose up + wait for Postgres for inventory_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "inventory"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:kitchen",
+      "detail": "docker compose up + wait for Postgres for kitchen_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "kitchen"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:kyc",
+      "detail": "docker compose up + wait for Postgres for kyc_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "kyc"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:loyalty",
+      "detail": "docker compose up + wait for Postgres for loyalty_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "loyalty"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:marketing",
+      "detail": "docker compose up + wait for Postgres for marketing_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "marketing"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:media",
+      "detail": "docker compose up + wait for Postgres for media_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "media"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:merchant",
+      "detail": "docker compose up + wait for Postgres for merchant_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "merchant"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:notifications",
+      "detail": "docker compose up + wait for Postgres for notifications_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "notifications"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:ordering",
+      "detail": "docker compose up + wait for Postgres for ordering_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "ordering"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:payments",
+      "detail": "docker compose up + wait for Postgres for payments_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "payments"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:payouts",
+      "detail": "docker compose up + wait for Postgres for payouts_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "payouts"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:pricing",
+      "detail": "docker compose up + wait for Postgres for pricing_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "pricing"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:promotions",
+      "detail": "docker compose up + wait for Postgres for promotions_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "promotions"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:recommendations",
+      "detail": "docker compose up + wait for Postgres for recommendations_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "recommendations"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:reservations",
+      "detail": "docker compose up + wait for Postgres for reservations_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "reservations"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:reviews",
+      "detail": "docker compose up + wait for Postgres for reviews_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "reviews"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:risk",
+      "detail": "docker compose up + wait for Postgres for risk_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "risk"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:search",
+      "detail": "docker compose up + wait for Postgres for search_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "search"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:support",
+      "detail": "docker compose up + wait for Postgres for support_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "support"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:wallet",
+      "detail": "docker compose up + wait for Postgres for wallet_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "wallet"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service:up:webhooks",
+      "detail": "docker compose up + wait for Postgres for webhooks_server.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "up",
+        "webhooks"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service: docker compose down",
+      "detail": "Tear down a picked service's Postgres + Redis (volumes wiped).",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "down",
+        "${input:service}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service: serverpod generate",
+      "detail": "Regenerate the picked service's client + protocol.",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "gen",
+        "${input:service}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service: test",
+      "detail": "Run the picked service's tests (auto-manages docker).",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "test",
+        "${input:service}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "service: run (no debugger)",
+      "detail": "Start the picked service's server in the foreground (no debug attach).",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "${workspaceFolder}/scripts/serve_service.sh",
+        "run",
+        "${input:service}"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "service",
+      "type": "pickString",
+      "description": "Service",
+      "options": [
+        "ads",
+        "analytics",
+        "audit",
+        "catalog",
+        "config",
+        "device",
+        "disputes",
+        "fulfillment",
+        "geo",
+        "gift_cards",
+        "identity",
+        "inventory",
+        "kitchen",
+        "kyc",
+        "loyalty",
+        "marketing",
+        "media",
+        "merchant",
+        "notifications",
+        "ordering",
+        "payments",
+        "payouts",
+        "pricing",
+        "promotions",
+        "recommendations",
+        "reservations",
+        "reviews",
+        "risk",
+        "search",
+        "support",
+        "wallet",
+        "webhooks"
+      ],
+      "default": "identity"
+    }
+  ]
+}

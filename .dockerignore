@@ -1,0 +1,44 @@
+# VCS
+.git
+.gitignore
+.github
+
+# IDE / editor
+.vscode
+.idea
+*.iml
+
+# OS
+.DS_Store
+
+# Flutter / Dart build + tool state
+**/.dart_tool
+**/.fvm
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build
+**/coverage
+**/doc/api
+**/.pub-cache
+**/.pub
+
+# Native platforms — we only build for web in Docker.
+**/android
+**/ios
+**/macos
+**/windows
+**/linux
+
+# Node / functions (not needed by the web builds).
+**/node_modules
+
+# Local serve logs + pids.
+/tmp
+.serve_all.pids
+
+# Docker artifacts themselves.
+docker-compose.override.yml
+
+# Misc
+*.log

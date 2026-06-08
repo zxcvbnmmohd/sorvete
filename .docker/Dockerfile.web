@@ -1,0 +1,62 @@
+# syntax=docker/dockerfile:1.7
+#
+# Generic Flutter-web builder for the Sorvete monorepo.
+# Pass APP=<admin|customer|driver|kds|merchant|pos> to pick which app to build.
+# Pass FLAVOR=<dev|prod> to choose the runtime config (defaults to prod).
+#
+# Flutter version is read from .fvmrc — the same source-of-truth that local
+# devs and CI use via FVM. No FLUTTER_VERSION build-arg needed.
+#
+# Multi-arch note: Flutter web output is CPU-agnostic (HTML/JS/WASM), so the
+# build stage always runs on the native builder arch via $BUILDPLATFORM.
+# Only the nginx runtime stage needs to match the target arch.
+
+# ---- build stage (always native arch) --------------------------------------
+FROM --platform=$BUILDPLATFORM dart:stable AS build
+ARG APP
+ARG FLAVOR=prod
+
+# Flutter requires git/curl/unzip/xz-utils (dart:stable ships only the bare Dart toolchain).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git curl unzip xz-utils ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install FVM — the version manager the rest of the monorepo uses.
+RUN dart pub global activate fvm
+ENV PATH="/root/.pub-cache/bin:$PATH"
+
+WORKDIR /src
+RUN git config --global --add safe.directory '*'
+
+# Pin Flutter via .fvmrc (cache layer invalidates only when the pin changes).
+COPY .fvmrc ./
+RUN fvm install
+
+# Copy the whole workspace. Apps are standalone packages that path-depend on
+# packages/backend (a pub-workspace member), which in turn path-depends on every
+# services/*/client. pub workspace resolution needs the root pubspec.yaml plus all
+# declared members present, so the one-app COPY is not enough — copy the full
+# context (.dockerignore strips build artifacts, native platforms, .git, etc.).
+COPY . .
+
+RUN test -n "${APP}" || (echo "ERROR: build-arg APP is required" && exit 1) \
+ && cd apps/${APP} \
+ && fvm flutter pub get \
+ && fvm flutter build web \
+      --release \
+      --source-maps \
+      --dart-define=FLAVOR=${FLAVOR} \
+ && mv build/web /dist
+
+# ---- runtime stage (inherits target arch automatically) --------------------
+FROM nginx:1.27-alpine AS runtime
+
+COPY .docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /dist /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

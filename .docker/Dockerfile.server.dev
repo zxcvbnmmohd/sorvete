@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.7
+#
+# Generic dev-mode Serverpod runner. ONE image used by all 32 services in
+# docker-compose.dev.yml — service-specific source comes in via bind-mount.
+#
+# Differences from production server Dockerfile:
+#   • JIT execution (`dart run`) instead of AOT (`dart compile exe`)
+#     — slower per-request but starts in ~1 s vs. needing a fresh build
+#   • inotify-tools watcher loop restarts the dart process when source changes
+#   • No source COPYed in — bind-mount supplies it at runtime
+#   • No multi-stage build — the runtime IS the build env
+#
+# Build once with:
+#   docker build -f .docker/Dockerfile.server.dev -t sorvete-dev-server:local .
+
+FROM dart:stable
+
+# Filesystem-event watcher + postgres client (handy for `docker exec` debugging).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      inotify-tools postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+
+# Minimal in-container workspace pubspec — its only member is the bind-mounted
+# `server` dir at runtime. Matches the per-service Serverpod layout.
+WORKDIR /app
+RUN printf '%s\n' \
+      'name: _' \
+      'environment:' \
+      '  sdk: ^3.11.4' \
+      'workspace:' \
+      '  - server' \
+      > pubspec.yaml
+
+COPY .docker/server-dev-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8080 8081 8082
+ENTRYPOINT ["/entrypoint.sh"]

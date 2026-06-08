@@ -1,0 +1,818 @@
+# ============================================================================
+# Production compose for the Sorvete platform — Dokploy reads this file.
+# Pulls pre-built images from GHCR (built + pushed by .github/workflows/ci.yml,
+# gated behind the full test suite).
+# No Flutter SDK or Dart toolchain ever runs on the deploy host.
+#
+# Required Dokploy environment variables:
+#   GHCR_OWNER     GitHub user/org owning the GHCR packages (e.g. zxcvbnmmohd)
+#   IMAGE_TAG      Tag to deploy. Set per environment to the branch name:
+#                  "develop" / "staging" / "production" (or a SHA for pins).
+#                  Defaults to "dev" — the local-build tag (scripts/build_all.sh).
+#   DB_PASSWORD    Shared Postgres password for every backend service.
+#
+# Each backend listens on internal :8080. No host ports are mapped — Dokploy /
+# Traefik routes external traffic to each container by hostname. Frontends
+# expose host ports 5001-5006 (Flutter web served via nginx).
+#
+# Migrations: every backend container runs `--apply-migrations` on start
+# (idempotent — Serverpod tracks applied migrations per-DB).
+# ============================================================================
+
+name: sorvete
+
+x-default: &default
+  restart: unless-stopped
+  pull_policy: always
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set (Dokploy → Environment)}
+
+x-backend-env: &backend-env
+  runmode: production
+  SERVERPOD_PASSWORD_database: ${DB_PASSWORD:?DB_PASSWORD must be set (Dokploy → Environment)}
+
+x-postgres-health: &postgres-health
+  test: ["CMD-SHELL", "pg_isready -U postgres"]
+  interval: 10s
+  timeout: 5s
+  retries: 10
+
+services:
+  # -------- Flutter web frontends (6 apps, host ports 5001-5006) --------
+  admin:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-admin-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5001:80"
+
+  customer:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-customer-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5002:80"
+
+  driver:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-driver-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5003:80"
+
+  merchant:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-merchant-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5004:80"
+
+  pos:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-pos-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5005:80"
+
+  kds:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-kds-web:${IMAGE_TAG:-dev}
+    ports:
+      - "5006:80"
+
+  # -------- 32 Serverpod backends (internal :8080, per-service Postgres) --------
+  ads-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-ads-server:${IMAGE_TAG:-dev}
+    depends_on:
+      ads-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  ads-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: ads
+    volumes:
+      - ads_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  analytics-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-analytics-server:${IMAGE_TAG:-dev}
+    depends_on:
+      analytics-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  analytics-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: analytics
+    volumes:
+      - analytics_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  audit-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-audit-server:${IMAGE_TAG:-dev}
+    depends_on:
+      audit-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  audit-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: audit
+    volumes:
+      - audit_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  catalog-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-catalog-server:${IMAGE_TAG:-dev}
+    depends_on:
+      catalog-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  catalog-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: catalog
+    volumes:
+      - catalog_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  config-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-config-server:${IMAGE_TAG:-dev}
+    depends_on:
+      config-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  config-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: config
+    volumes:
+      - config_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  device-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-device-server:${IMAGE_TAG:-dev}
+    depends_on:
+      device-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  device-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: device
+    volumes:
+      - device_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  disputes-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-disputes-server:${IMAGE_TAG:-dev}
+    depends_on:
+      disputes-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  disputes-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: disputes
+    volumes:
+      - disputes_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  fulfillment-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-fulfillment-server:${IMAGE_TAG:-dev}
+    depends_on:
+      fulfillment-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  fulfillment-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: fulfillment
+    volumes:
+      - fulfillment_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  geo-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-geo-server:${IMAGE_TAG:-dev}
+    depends_on:
+      geo-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  geo-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: geo
+    volumes:
+      - geo_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  gift_cards-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-gift_cards-server:${IMAGE_TAG:-dev}
+    depends_on:
+      gift_cards-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  gift_cards-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: gift_cards
+    volumes:
+      - gift_cards_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  identity-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-identity-server:${IMAGE_TAG:-dev}
+    depends_on:
+      identity-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  identity-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: identity
+    volumes:
+      - identity_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  inventory-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-inventory-server:${IMAGE_TAG:-dev}
+    depends_on:
+      inventory-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  inventory-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: inventory
+    volumes:
+      - inventory_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  kitchen-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-kitchen-server:${IMAGE_TAG:-dev}
+    depends_on:
+      kitchen-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  kitchen-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: kitchen
+    volumes:
+      - kitchen_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  kyc-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-kyc-server:${IMAGE_TAG:-dev}
+    depends_on:
+      kyc-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  kyc-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: kyc
+    volumes:
+      - kyc_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  loyalty-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-loyalty-server:${IMAGE_TAG:-dev}
+    depends_on:
+      loyalty-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  loyalty-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: loyalty
+    volumes:
+      - loyalty_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  marketing-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-marketing-server:${IMAGE_TAG:-dev}
+    depends_on:
+      marketing-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  marketing-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: marketing
+    volumes:
+      - marketing_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  media-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-media-server:${IMAGE_TAG:-dev}
+    depends_on:
+      media-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  media-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: media
+    volumes:
+      - media_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  merchant-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-merchant-server:${IMAGE_TAG:-dev}
+    depends_on:
+      merchant-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  merchant-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: merchant
+    volumes:
+      - merchant_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  notifications-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-notifications-server:${IMAGE_TAG:-dev}
+    depends_on:
+      notifications-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  notifications-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: notifications
+    volumes:
+      - notifications_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  ordering-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-ordering-server:${IMAGE_TAG:-dev}
+    depends_on:
+      ordering-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  ordering-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: ordering
+    volumes:
+      - ordering_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  payments-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-payments-server:${IMAGE_TAG:-dev}
+    depends_on:
+      payments-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  payments-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: payments
+    volumes:
+      - payments_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  payouts-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-payouts-server:${IMAGE_TAG:-dev}
+    depends_on:
+      payouts-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  payouts-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: payouts
+    volumes:
+      - payouts_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  pricing-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-pricing-server:${IMAGE_TAG:-dev}
+    depends_on:
+      pricing-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  pricing-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: pricing
+    volumes:
+      - pricing_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  promotions-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-promotions-server:${IMAGE_TAG:-dev}
+    depends_on:
+      promotions-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  promotions-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: promotions
+    volumes:
+      - promotions_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  recommendations-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-recommendations-server:${IMAGE_TAG:-dev}
+    depends_on:
+      recommendations-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  recommendations-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: recommendations
+    volumes:
+      - recommendations_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  reservations-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-reservations-server:${IMAGE_TAG:-dev}
+    depends_on:
+      reservations-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  reservations-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: reservations
+    volumes:
+      - reservations_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  reviews-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-reviews-server:${IMAGE_TAG:-dev}
+    depends_on:
+      reviews-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  reviews-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: reviews
+    volumes:
+      - reviews_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  risk-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-risk-server:${IMAGE_TAG:-dev}
+    depends_on:
+      risk-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  risk-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: risk
+    volumes:
+      - risk_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  search-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-search-server:${IMAGE_TAG:-dev}
+    depends_on:
+      search-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  search-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: search
+    volumes:
+      - search_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  support-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-support-server:${IMAGE_TAG:-dev}
+    depends_on:
+      support-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  support-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: support
+    volumes:
+      - support_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  wallet-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-wallet-server:${IMAGE_TAG:-dev}
+    depends_on:
+      wallet-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  wallet-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: wallet
+    volumes:
+      - wallet_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+  webhooks-server:
+    <<: *default
+    image: ghcr.io/${GHCR_OWNER}/sorvete-webhooks-server:${IMAGE_TAG:-dev}
+    depends_on:
+      webhooks-postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    expose:
+      - "8080"
+
+  webhooks-postgres:
+    <<: *default
+    image: pgvector/pgvector:pg18
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: webhooks
+    volumes:
+      - webhooks_data:/var/lib/postgresql
+    healthcheck:
+      <<: *postgres-health
+
+
+volumes:
+  ads_data:
+  analytics_data:
+  audit_data:
+  catalog_data:
+  config_data:
+  device_data:
+  disputes_data:
+  fulfillment_data:
+  geo_data:
+  gift_cards_data:
+  identity_data:
+  inventory_data:
+  kitchen_data:
+  kyc_data:
+  loyalty_data:
+  marketing_data:
+  media_data:
+  merchant_data:
+  notifications_data:
+  ordering_data:
+  payments_data:
+  payouts_data:
+  pricing_data:
+  promotions_data:
+  recommendations_data:
+  reservations_data:
+  reviews_data:
+  risk_data:
+  search_data:
+  support_data:
+  wallet_data:
+  webhooks_data:

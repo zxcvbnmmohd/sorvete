@@ -1,0 +1,28 @@
+services:
+  # Development services
+  postgres:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: pricing
+      POSTGRES_PASSWORD: "${SERVICE_DB_PASSWORD:-devpass}"
+    volumes:
+      - pricing_data:/var/lib/postgresql
+
+  # Test services
+  postgres_test:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: pricing_test
+      POSTGRES_PASSWORD: "${SERVERPOD_PASSWORD_database:?set in services/<svc>/server/.env (local) or CI secret}"
+    volumes:
+      - pricing_test_data:/var/lib/postgresql
+
+volumes:
+  pricing_data:
+  pricing_test_data:

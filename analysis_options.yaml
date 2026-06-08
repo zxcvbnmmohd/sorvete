@@ -1,0 +1,15 @@
+# Root analyzer config for the Sorvete monorepo.
+# Individual packages/apps can extend or override this with their own
+# analysis_options.yaml; per-app defaults from `flutter create` keep
+# `include: package:flutter_lints/flutter.yaml` and add nothing extra.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/build/**"
+    - "**/.dart_tool/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/lib/src/generated/**"     # Serverpod auto-generated protocol
+    - "services/*/client/**"        # Auto-regenerated from each server

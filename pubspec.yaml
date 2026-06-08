@@ -1,0 +1,313 @@
+name: sorvete
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+workspace:
+  # Shared packages.
+  - packages/backend
+
+  # Per-service Serverpod packages (32 services × {client, server} = 64 entries).
+  # Apps will go back in when they're wired in Wave 1 (need resolution: workspace
+  # in each app's pubspec + an SDK constraint compatible with the one above).
+  - services/ads/client
+  - services/ads/server
+  - services/analytics/client
+  - services/analytics/server
+  - services/audit/client
+  - services/audit/server
+  - services/catalog/client
+  - services/catalog/server
+  - services/config/client
+  - services/config/server
+  - services/device/client
+  - services/device/server
+  - services/disputes/client
+  - services/disputes/server
+  - services/fulfillment/client
+  - services/fulfillment/server
+  - services/geo/client
+  - services/geo/server
+  - services/gift_cards/client
+  - services/gift_cards/server
+  - services/identity/client
+  - services/identity/server
+  - services/inventory/client
+  - services/inventory/server
+  - services/kitchen/client
+  - services/kitchen/server
+  - services/kyc/client
+  - services/kyc/server
+  - services/loyalty/client
+  - services/loyalty/server
+  - services/marketing/client
+  - services/marketing/server
+  - services/media/client
+  - services/media/server
+  - services/merchant/client
+  - services/merchant/server
+  - services/notifications/client
+  - services/notifications/server
+  - services/ordering/client
+  - services/ordering/server
+  - services/payments/client
+  - services/payments/server
+  - services/payouts/client
+  - services/payouts/server
+  - services/pricing/client
+  - services/pricing/server
+  - services/promotions/client
+  - services/promotions/server
+  - services/recommendations/client
+  - services/recommendations/server
+  - services/reservations/client
+  - services/reservations/server
+  - services/reviews/client
+  - services/reviews/server
+  - services/risk/client
+  - services/risk/server
+  - services/search/client
+  - services/search/server
+  - services/support/client
+  - services/support/server
+  - services/wallet/client
+  - services/wallet/server
+  - services/webhooks/client
+  - services/webhooks/server
+
+# ============================================================================
+# Dependency version catalog — single source of truth for the entire workspace.
+# Child packages use `any` and inherit these versions via pub workspace resolution.
+# To upgrade a dependency, change the version HERE and run `melos bootstrap`.
+# ============================================================================
+
+dependencies:
+  # -- State management --
+  bloc: ^9.2.1
+  bloc_concurrency: ^0.3.0
+  flutter_bloc: ^9.1.1
+  get_it: ^9.2.1
+
+  # -- Networking --
+  connectivity_plus: ^7.1.1
+  dio: ^5.9.2
+
+  # -- Serialization & code gen (annotations) --
+  csv: ^8.0.0
+  envied: ^1.3.5
+  equatable: ^2.0.8
+  fpdart: ^1.2.0
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.12.0
+
+  # -- Routing --
+  go_router: ^17.3.0
+  go_router_builder: ^4.3.0
+
+  # -- UI --
+  cached_network_image: ^3.4.1
+  cupertino_icons: ^1.0.9
+  flutter_animate: ^4.5.2
+  flutter_svg: ^2.3.0
+  shimmer: ^3.0.0
+
+  # -- Charts & tables --
+  data_table_2: ^2.7.2
+  fl_chart: ^1.2.0
+
+  # -- Maps & location --
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.17.1
+
+  # -- Media --
+  audioplayers: ^6.7.0
+  image_cropper: ^12.2.0
+  image_picker: ^1.2.2
+  pdf: ^3.11.0
+  signature: ^6.0.0
+
+  # -- i18n --
+  shared_preferences: ^2.5.0
+  slang: ^4.15.0
+  slang_flutter: ^4.15.0
+
+  # -- Device & platform --
+  intl: ^0.20.2
+  local_auth: ^3.0.1
+  printing: ^5.14.3
+  url_launcher: ^6.3.2
+
+  # -- Logging --
+  logger: ^2.7.0
+
+  # -- Identifiers (UUID v7 — see ARCHITECTURE.md §10) --
+  uuid: ^4.5.1
+
+  # -- Serverpod client (consumed by packages/backend) --
+  serverpod_client: 3.4.9
+
+  # -- Flutter SDK --
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  # -- Code generation --
+  build_runner: ^2.15.0
+  envied_generator: ^1.3.5
+  freezed: ^3.2.5
+  json_serializable: ^6.14.0
+
+  # -- Testing --
+  bloc_test: ^10.0.0
+  faker: ^2.2.0
+  mocktail: ^1.0.5
+
+  # -- i18n code gen --
+  slang_build_runner: ^4.15.0
+
+  # -- Tooling --
+  import_sorter: ^4.6.0
+  melos: ^7.0.0
+
+import_sorter:
+  emojis: true
+
+melos:
+  sdkPath: .fvm/flutter_sdk
+
+  command:
+    bootstrap:
+      usePubspecOverrides: true
+      hooks:
+        post: sh scripts/setup_hooks.sh
+
+  scripts:
+    analyze:
+      run: melos exec -- "dart analyze --fatal-infos"
+      description: Run dart analyze in all packages.
+      packageFilters:
+        # Serverpod server/client own their own CI (test-server job): they use
+        # the Serverpod toolchain (generate + DB) and a different SDK pin.
+        ignore:
+          - "*_server"
+          - "*_client"
+
+    test:
+      run: melos exec -- "flutter test"
+      description: Run tests in all packages.
+      packageFilters:
+        dirExists: test
+        ignore:
+          - "*_server"
+          - "*_client"
+
+    test:coverage:
+      run: melos exec -- "flutter test --coverage"
+      description: Run tests with lcov coverage output per package.
+      packageFilters:
+        dirExists: test
+        ignore:
+          - "*_server"
+          - "*_client"
+
+    coverage:check:
+      run: sh scripts/coverage_check.sh
+      description: Run tests with coverage and fail if critical packages drop below threshold.
+
+    clean:
+      run: melos exec -- "flutter clean"
+      description: Run flutter clean in all packages.
+
+    format:
+      run: melos exec -- "dart format ."
+      description: Format all packages.
+      packageFilters:
+        ignore:
+          - "*_server"
+          - "*_client"
+
+    format:check:
+      run: melos exec -- "dart format --set-exit-if-changed ."
+      description: Check formatting without modifying files.
+      packageFilters:
+        ignore:
+          - "*_server"
+          - "*_client"
+
+    sort-imports:
+      run: sh scripts/sort_imports.sh
+      description: Sort imports with emoji headers in all packages.
+
+    build:runner:
+      run: melos exec -- "dart run build_runner build --delete-conflicting-outputs"
+      description: Run build_runner in all packages that use it.
+      packageFilters:
+        dependsOn: build_runner
+
+    check:
+      run: melos run analyze && melos run format:check && melos run test
+      description: Run all checks (analyze + format + test).
+
+    dev:
+      run: sh scripts/serve_all.sh
+      description: Run all 6 apps together on ports 5001-5006 (Turborepo-style). Ctrl+C stops all.
+
+    dev:stop:
+      run: sh scripts/serve_all.sh stop
+      description: Stop all running app servers.
+
+    # ----------------------------------------------------------------------- #
+    # Per-microservice helpers. Each one takes a service name as the first    #
+    # extra arg (after `--`). Service names are auto-discovered from          #
+    # services/*/. Example:                                                   #
+    #   melos run service:run -- ordering                                     #
+    # ----------------------------------------------------------------------- #
+    service:up:
+      run: sh scripts/serve_service.sh up
+      description: docker compose up for a service (`melos run service:up -- <name>`).
+
+    service:down:
+      run: sh scripts/serve_service.sh down
+      description: docker compose down -v for a service.
+
+    service:run:
+      run: sh scripts/serve_service.sh run
+      description: Up + dart bin/main.dart --apply-migrations (foreground).
+
+    service:gen:
+      run: sh scripts/serve_service.sh gen
+      description: Run serverpod generate for a service.
+
+    service:test:
+      run: sh scripts/serve_service.sh test
+      description: Run a service's tests (auto-manages docker).
+
+    service:list:
+      run: sh scripts/serve_service.sh list
+      description: List discovered services.
+
+    # ----------------------------------------------------------------------- #
+    # Full-stack dev: 32 Serverpod backends in Docker + 6 Flutter apps native #
+    # with hot reload. Single Ctrl+C stops frontends; backends keep running   #
+    # so iteration cost is low.                                               #
+    # ----------------------------------------------------------------------- #
+    dev:full:
+      run: sh scripts/dev_all.sh up
+      description: Bring up backends in Docker + run 6 apps native with hot reload.
+
+    dev:full:down:
+      run: sh scripts/dev_all.sh down
+      description: Stop backends (data + images kept).
+
+    dev:full:reset:
+      run: sh scripts/dev_all.sh reset
+      description: Stop backends + wipe Postgres data (images kept).
+
+    dev:full:status:
+      run: sh scripts/dev_all.sh status
+      description: Show what's running (frontends + backends).
+
+    dev:full:build:
+      run: sh scripts/dev_all.sh build
+      description: Rebuild all 38 local Docker images.

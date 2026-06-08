@@ -1,0 +1,28 @@
+services:
+  # Development services
+  postgres:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: kitchen
+      POSTGRES_PASSWORD: "${SERVICE_DB_PASSWORD:-devpass}"
+    volumes:
+      - kitchen_data:/var/lib/postgresql
+
+  # Test services
+  postgres_test:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: kitchen_test
+      POSTGRES_PASSWORD: "${SERVERPOD_PASSWORD_database:?set in services/<svc>/server/.env (local) or CI secret}"
+    volumes:
+      - kitchen_test_data:/var/lib/postgresql
+
+volumes:
+  kitchen_data:
+  kitchen_test_data:

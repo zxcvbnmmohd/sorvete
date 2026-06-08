@@ -1,0 +1,477 @@
+name: CI
+
+on:
+  # Three-tier flow: `develop` (integration — direct commits + feature-branch
+  # merges allowed) → `staging` (pre-prod) → `production` (protected; the only
+  # way in is a PR merged up from `staging`). Push events build + push images
+  # tagged with the branch name and trigger a Dokploy redeploy; pull_request
+  # events run the test suite only (no image build) to validate every PR
+  # targeting any of the three integration branches.
+  push:
+    branches: [develop, staging, production]
+  pull_request:
+    branches: [develop, staging, production]
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Flutter FLAVOR baked into the bundle'
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Opt every JS-based action into Node 24 ahead of the June 2026 deadline.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  SERVERPOD_CLI_VERSION: '3.4.9'
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/sorvete
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart (to bootstrap FVM)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install Flutter via FVM
+        run: fvm install
+
+      - name: Install Melos
+        run: fvm dart pub global activate melos
+
+      - name: Bootstrap
+        run: fvm exec melos bootstrap
+
+      - name: Analyze
+        run: fvm exec melos run analyze --no-select
+
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart (to bootstrap FVM)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install Flutter via FVM
+        run: fvm install
+
+      - name: Install Melos
+        run: fvm dart pub global activate melos
+
+      - name: Bootstrap
+        run: fvm exec melos bootstrap
+
+      - name: Check formatting
+        run: fvm exec melos run format:check --no-select
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [analyze, format]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart (to bootstrap FVM)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install Flutter via FVM
+        run: fvm install
+
+      - name: Install Melos
+        run: fvm dart pub global activate melos
+
+      - name: Bootstrap
+        run: fvm exec melos bootstrap
+
+      - name: Run tests
+        run: fvm exec melos run test --no-select
+
+  coverage:
+    name: Coverage gate
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart (to bootstrap FVM)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install Flutter via FVM
+        run: fvm install
+
+      - name: Install Melos
+        run: fvm dart pub global activate melos
+
+      - name: Bootstrap
+        run: fvm exec melos bootstrap
+
+      - name: Enforce coverage thresholds
+        run: sh scripts/coverage_check.sh
+
+      - name: Upload lcov artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: |
+            packages/*/coverage/lcov.info
+            apps/*/coverage/lcov.info
+
+  # ----------------------------------------------------------------- #
+  # Per-service Serverpod backends. Each service is an independent    #
+  # Serverpod project with its own Postgres/Redis. The matrix         #
+  # parallelizes one CI job per service: spin up containers, generate #
+  # the protocol, analyze/format-check/test, tear down.               #
+  # ----------------------------------------------------------------- #
+  test-service:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [analyze, format]
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ads
+          - analytics
+          - audit
+          - catalog
+          - config
+          - device
+          - disputes
+          - fulfillment
+          - geo
+          - gift_cards
+          - identity
+          - inventory
+          - kitchen
+          - kyc
+          - loyalty
+          - marketing
+          - media
+          - merchant
+          - notifications
+          - ordering
+          - payments
+          - payouts
+          - pricing
+          - promotions
+          - recommendations
+          - reservations
+          - reviews
+          - risk
+          - search
+          - support
+          - wallet
+          - webhooks
+    env:
+      # Test-tier secrets — supplied via GitHub Actions repo secrets, never
+      # committed. Set under Settings → Secrets and variables → Actions.
+      SERVERPOD_PASSWORD_database: ${{ secrets.SERVERPOD_PASSWORD_DATABASE }}
+      SERVERPOD_PASSWORD_redis: ${{ secrets.SERVERPOD_PASSWORD_REDIS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart (to bootstrap FVM)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install Flutter via FVM
+        run: fvm install
+
+      - name: Install Melos
+        run: fvm dart pub global activate melos
+
+      - name: Bootstrap (resolve workspace)
+        run: fvm exec melos bootstrap
+
+      - name: Install Serverpod CLI
+        run: fvm dart pub global activate serverpod_cli $SERVERPOD_CLI_VERSION
+
+      - name: Start test containers (Postgres + Redis)
+        working-directory: services/${{ matrix.service }}/server
+        run: docker compose up --quiet-pull --build -d
+
+      - name: Generate client + protocol
+        working-directory: services/${{ matrix.service }}/server
+        run: fvm dart pub global run serverpod_cli generate
+
+      - name: Analyze
+        working-directory: services/${{ matrix.service }}/server
+        run: fvm dart analyze --fatal-infos
+
+      - name: Format check
+        working-directory: services/${{ matrix.service }}/server
+        run: fvm dart format --set-exit-if-changed .
+
+      - name: Run tests
+        working-directory: services/${{ matrix.service }}/server
+        run: fvm dart test
+
+      - name: Stop containers
+        if: always()
+        working-directory: services/${{ matrix.service }}/server
+        run: docker compose down -v
+
+  # ----------------------------------------------------------------- #
+  # Release web builds for each merchant-facing app. Uses the `dev`    #
+  # flavor; the goal here is to catch tree-shaking / release-only      #
+  # compilation breaks before they hit a deploy. Also surfaces any    #
+  # late-binding render errors on initial paint.                      #
+  # ----------------------------------------------------------------- #
+  build-merchant:
+    name: Build merchant (web release)
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    # PR-only sanity build; on push the gated build-app job builds + pushes.
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate fvm
+      - run: fvm install
+      - run: fvm dart pub global activate melos
+      - run: fvm exec melos bootstrap
+      - name: flutter build web --release
+        working-directory: apps/merchant
+        run: fvm flutter build web --release --dart-define=FLAVOR=dev
+
+  build-pos:
+    name: Build POS (web release)
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    # PR-only sanity build; on push the gated build-app job builds + pushes.
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate fvm
+      - run: fvm install
+      - run: fvm dart pub global activate melos
+      - run: fvm exec melos bootstrap
+      - name: flutter build web --release
+        working-directory: apps/pos
+        run: fvm flutter build web --release --dart-define=FLAVOR=dev
+
+  build-kds:
+    name: Build KDS (web release)
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    # PR-only sanity build; on push the gated build-app job builds + pushes.
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate fvm
+      - run: fvm install
+      - run: fvm dart pub global activate melos
+      - run: fvm exec melos bootstrap
+      - name: flutter build web --release
+        working-directory: apps/kds
+        run: fvm flutter build web --release --dart-define=FLAVOR=dev
+
+  build-customer:
+    name: Build customer (web release)
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    # PR-only sanity build; on push the gated build-app job builds + pushes.
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate fvm
+      - run: fvm install
+      - run: fvm dart pub global activate melos
+      - run: fvm exec melos bootstrap
+      - name: flutter build web --release
+        working-directory: apps/customer
+        run: fvm flutter build web --release --dart-define=FLAVOR=dev
+
+  # ===================================================================== #
+  # Image build + push — GATED on the full test suite above. Runs only on #
+  # push / workflow_dispatch (never on PRs). Multi-arch images to GHCR;   #
+  # Dokploy pulls them. These jobs replace the standalone                 #
+  # docker-build-push.yml so build never runs unless tests pass.          #
+  # ===================================================================== #
+  build-app:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    needs: [analyze, format, test, coverage, test-service]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [customer, admin, driver, merchant, pos, kds]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU (for arm64 runtime layer)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push ${{ matrix.app }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .docker/Dockerfile.web
+          platforms: linux/amd64,linux/arm64
+          push: true
+          # `-web` suffix namespaces the frontend images so they don't collide
+          # with the legacy `sorvete-<app>` packages owned by the old `sorvete`
+          # repo. Drop the suffix once those legacy packages are deleted.
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}-web:latest
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}-web:${{ github.ref_name }}
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}-web:${{ github.sha }}
+          build-args: |
+            APP=${{ matrix.app }}
+            FLAVOR=${{ inputs.flavor || (github.ref_name == 'production' && 'prod' || github.ref_name == 'staging' && 'staging' || 'dev') }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to:   type=gha,scope=${{ matrix.app }},mode=max
+
+  build-service:
+    name: Build ${{ matrix.service }}_server
+    runs-on: ubuntu-latest
+    needs: [analyze, format, test, coverage, test-service]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ads
+          - analytics
+          - audit
+          - catalog
+          - config
+          - device
+          - disputes
+          - fulfillment
+          - geo
+          - gift_cards
+          - identity
+          - inventory
+          - kitchen
+          - kyc
+          - loyalty
+          - marketing
+          - media
+          - merchant
+          - notifications
+          - ordering
+          - payments
+          - payouts
+          - pricing
+          - promotions
+          - recommendations
+          - reservations
+          - reviews
+          - risk
+          - search
+          - support
+          - wallet
+          - webhooks
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU (per-arch AOT build)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Serverpod generated code (lib/src/generated/) is gitignored, so it is
+      # absent from a fresh checkout. Regenerate it on the runner before the
+      # Docker build so the context (services/<svc>/) contains it. Use Flutter
+      # (not plain Dart): the root workspace package `sorvete` depends on the
+      # Flutter SDK, which pub workspace resolution (run by generate) requires.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.1
+          channel: stable
+          cache: true
+
+      - name: Activate Serverpod CLI
+        run: dart pub global activate serverpod_cli 3.4.9
+
+      - name: Generate ${{ matrix.service }} server code
+        working-directory: services/${{ matrix.service }}/server
+        run: |
+          dart pub get
+          dart pub global run serverpod_cli:serverpod_cli generate
+
+      - name: Build & push ${{ matrix.service }}_server
+        uses: docker/build-push-action@v6
+        with:
+          # Dockerfile inside server/ does `COPY server server` — needs the
+          # *wrapper* dir (services/<svc>/) as context, not server/ itself.
+          context: services/${{ matrix.service }}
+          file: services/${{ matrix.service }}/server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}-server:latest
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}-server:${{ github.ref_name }}
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}-server:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}-server
+          cache-to:   type=gha,scope=${{ matrix.service }}-server,mode=max
+
+  notify-dokploy:
+    name: Trigger Dokploy redeploy
+    needs: [build-app, build-service]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
+    steps:
+      - name: Call Dokploy webhook
+        env:
+          WEBHOOK: ${{ secrets.DOKPLOY_WEBHOOK }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "DOKPLOY_WEBHOOK not set — skipping (images are pushed; redeploy manually in Dokploy)."
+            exit 0
+          fi
+          curl -fsSL -X POST "$WEBHOOK"

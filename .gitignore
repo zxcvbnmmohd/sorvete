@@ -1,0 +1,50 @@
+# ============================================================================
+# Sorvete monorepo .gitignore.
+# Per-app and per-service flutter create scaffolds carry their own .gitignore
+# entries; this file covers monorepo-wide and tool-state files that aren't
+# scoped to a single subpackage.
+# ============================================================================
+
+# --- Dart / pub state ---
+**/.dart_tool/
+**/.packages
+**/pubspec_overrides.yaml
+
+# --- Flutter ---
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.fvm/
+.flutter-plugins-dependencies
+
+# --- Generated code (committed nowhere; regen via build_runner / serverpod) ---
+**/*.g.dart
+**/*.freezed.dart
+**/lib/src/generated/
+
+# --- Serverpod secrets (each service holds its own dev passwords) ---
+**/config/passwords.yaml
+
+# --- Local docker-compose env (per-service dev/test DB passwords) ---
+services/*/server/.env
+.env
+
+# --- IDE / editor state ---
+.idea/
+**/*.iml
+.vscode/*.local.json
+.claude/
+
+# --- Local server / dev pids + logs ---
+.serve_all.pids
+.dev_all.pids
+.scaffold.log
+/tmp/sorvete-*.log
+*.log
+
+# --- OS metadata ---
+.DS_Store
+Thumbs.db
+
+# FVM Version Cache
+.fvm/

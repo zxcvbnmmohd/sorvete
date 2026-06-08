@@ -1,0 +1,28 @@
+services:
+  # Development services
+  postgres:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: gift_cards
+      POSTGRES_PASSWORD: "${SERVICE_DB_PASSWORD:-devpass}"
+    volumes:
+      - gift_cards_data:/var/lib/postgresql
+
+  # Test services
+  postgres_test:
+    image: pgvector/pgvector:pg18
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: gift_cards_test
+      POSTGRES_PASSWORD: "${SERVERPOD_PASSWORD_database:?set in services/<svc>/server/.env (local) or CI secret}"
+    volumes:
+      - gift_cards_test_data:/var/lib/postgresql
+
+volumes:
+  gift_cards_data:
+  gift_cards_test_data:
