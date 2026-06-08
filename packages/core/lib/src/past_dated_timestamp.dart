@@ -8,5 +8,7 @@
 ///
 /// Contract present from Wave 0 even though the offline engine ships in Wave 5.
 class PastDatedTimestamp {
+  const PastDatedTimestamp._();
+
   static DateTime now() => DateTime.now().toUtc();
 }

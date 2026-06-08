@@ -6,6 +6,7 @@ environment:
 
 workspace:
   # Shared packages.
+  - packages/core
   - packages/backend
 
   # Per-service Serverpod packages (32 services × {client, server} = 64 entries).
@@ -194,13 +195,12 @@ melos:
           - "*_client"
 
     test:
-      run: melos exec -- "flutter test"
-      description: Run tests in all packages.
-      packageFilters:
-        dirExists: test
-        ignore:
-          - "*_server"
-          - "*_client"
+      # Flutter packages run `flutter test`; pure-Dart packages (e.g.
+      # packages/core) have no Flutter SDK dep and run `dart test`.
+      run: >
+        melos exec --flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- flutter test &&
+        melos exec --no-flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- dart test
+      description: Run tests in all packages (flutter test + dart test by package type).
 
     test:coverage:
       run: melos exec -- "flutter test --coverage"

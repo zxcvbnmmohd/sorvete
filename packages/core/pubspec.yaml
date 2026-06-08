@@ -1,0 +1,27 @@
+name: sorvete_core
+description: >-
+  Pure-Dart shared domain primitives for every Sorvete app and service —
+  Money/Currency, UUID v7 ids, the AppError envelope, the OutboxEvent
+  envelope, and past-dated-timestamp helpers. No Flutter, no Serverpod, so
+  both the Flutter apps and the pure-Dart Serverpod servers can depend on it.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+resolution: workspace
+
+# Versions are inherited from the root workspace version catalog (see the
+# root pubspec.yaml). Child packages declare `any` per that convention.
+dependencies:
+  freezed_annotation: any
+  json_annotation: any
+  uuid: any
+
+dev_dependencies:
+  build_runner: any
+  freezed: any
+  json_serializable: any
+  test: any
+  faker: any
+  lints: any
