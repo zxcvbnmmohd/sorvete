@@ -1,0 +1,22 @@
+name: sorvete_server_kit
+description: >-
+  Server-side shared engine for Sorvete's Serverpod services: the outbox
+  writer/relay, the idempotency store, and the event-consumer primitive — all
+  behind ports so they unit-test with no Postgres and no NATS. Pure Dart; the
+  Serverpod (transaction/Postgres) and NATS adapters bind in later slices
+  (issues #4 and #5).
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+resolution: workspace
+
+dependencies:
+  sorvete_core:
+    path: ../core
+
+dev_dependencies:
+  test: any
+  faker: any
+  lints: any

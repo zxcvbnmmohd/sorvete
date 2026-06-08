@@ -7,6 +7,7 @@ environment:
 workspace:
   # Shared packages.
   - packages/core
+  - packages/server_kit
   - packages/backend
 
   # Per-service Serverpod packages (32 services × {client, server} = 64 entries).
