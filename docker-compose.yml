@@ -77,6 +77,21 @@ services:
     ports:
       - "5006:80"
 
+  # -------- Async event bus (NATS) --------
+  # Core pub/sub transport for the outbox relay + event consumers
+  # (ARCHITECTURE.md §7). JetStream is enabled with file storage so the
+  # JetStream follow-up can adopt durable consumers without re-provisioning;
+  # today the outbox + idempotent consumers provide loss/duplicate protection.
+  # Internal only — backends reach it at nats:4222.
+  nats:
+    <<: *default
+    image: nats:2.10-alpine
+    command: ["-js", "-sd", "/data"]
+    volumes:
+      - nats_data:/data
+    expose:
+      - "4222"
+
   # -------- 32 Serverpod backends (internal :8080, per-service Postgres) --------
   ads-server:
     <<: *default
@@ -784,6 +799,7 @@ services:
 
 
 volumes:
+  nats_data:
   ads_data:
   analytics_data:
   audit_data:

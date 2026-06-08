@@ -7,5 +7,7 @@ library;
 
 export 'src/event_consumer.dart';
 export 'src/idempotency_store.dart';
+export 'src/nats_bus.dart';
+export 'src/nats_protocol.dart';
 export 'src/outbox.dart';
 export 'src/outbox_relay.dart';

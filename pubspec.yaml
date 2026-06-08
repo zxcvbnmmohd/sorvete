@@ -198,10 +198,12 @@ melos:
     test:
       # Flutter packages run `flutter test`; pure-Dart packages (e.g.
       # packages/core) have no Flutter SDK dep and run `dart test`.
+      # `integration`-tagged tests need live infra (e.g. NATS) and are excluded
+      # here; run them with `dart test --tags integration` (or the e2e job).
       run: >
-        melos exec --flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- flutter test &&
-        melos exec --no-flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- dart test
-      description: Run tests in all packages (flutter test + dart test by package type).
+        melos exec --flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- flutter test --exclude-tags integration &&
+        melos exec --no-flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- dart test --exclude-tags integration
+      description: Run unit tests in all packages (flutter test + dart test by package type; excludes integration).
 
     test:coverage:
       run: melos exec -- "flutter test --coverage"
