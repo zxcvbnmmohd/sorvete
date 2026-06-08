@@ -1,4 +1,4 @@
-# Service catalog — 33 services across 5 tiers, `tax` as a shared library
+# Service catalog — 32 services across 5 tiers, `tax` as a shared library
 
 ## Context
 
@@ -6,7 +6,7 @@ ADR-0001 commits to microservices and ADR-0002 to database-per-service. The rema
 
 ## Decision
 
-**33 services + 1 shared library.**
+**32 services + 1 shared library.** (The tier counts below sum to 32 services; `tax` is a library, not a service — earlier drafts that said "33" double-counted `tax`.)
 
 ### Tier 0 — Foundation (6)
 `identity`, `merchant`, `device`, `media`, `geo`, `config`
@@ -14,7 +14,7 @@ ADR-0001 commits to microservices and ADR-0002 to database-per-service. The rema
 ### Tier 1 — Commerce core (7)
 `catalog`, `inventory`, `pricing`, `promotions`, `loyalty`, `gift_cards`, `ordering`
 
-### Tier 2 — Money & risk (7)
+### Tier 2 — Money & risk (6)
 `payments`, `payouts`, `wallet`, `disputes`, `risk`, `kyc`  · plus shared library `packages/tax`
 
 ### Tier 3 — Fulfillment (3)
@@ -55,8 +55,8 @@ Where none of those held, the candidate was folded. `tax` failed all five at lau
 
 ## Consequences
 
-- `pubspec.yaml` workspace list expands to include `services/*` (33 Serverpod projects contributing ~100 packages between them) plus `packages/tax`.
-- `docker-compose.yml` grows to ~70 long-running containers at parity: 33 services + 33 Postgres + supporting infra (NATS JetStream, Meilisearch, MinIO, Valkey, Postal, Nominatim, OpenRouteService/Valhalla, ClickHouse, Grafana/Loki/Prometheus/Tempo, GlitchTip, Infisical).
+- `pubspec.yaml` workspace list expands to include `services/*` (32 Serverpod projects contributing ~100 packages between them) plus `packages/tax`.
+- `docker-compose.yml` grows to ~68 long-running containers at parity: 32 services + 32 Postgres + supporting infra (NATS JetStream, Meilisearch, MinIO, Valkey, Postal, Nominatim, OpenRouteService/Valhalla, ClickHouse, Grafana/Loki/Prometheus/Tempo, GlitchTip, Infisical).
 - Cross-service data flow defaults to event-driven local-projection reads, not synchronous joins.
 
 ## Status

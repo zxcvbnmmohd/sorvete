@@ -16,7 +16,7 @@ Verticals supported from day one (data-model wise): restaurants, groceries, butc
 
 Markets supported from day one: **card-economy** (US, EU, etc.) and **cash-economy** (Somalia, Lebanon, Iraq, Egypt, Pakistan, Kenya, Nigeria, Bangladesh, …). Sanctioned markets (Syria) are excluded — see ADR-0004.
 
-The platform is built as **33 microservices** running on **Serverpod** (Dart), each owning its own **Postgres** database, deployed on a single **Dokploy VPS**, communicating via **Serverpod typed clients** (synchronous) and **NATS JetStream** (asynchronous via the outbox pattern). The 6 client surfaces are **Flutter apps** (Customer / Merchant / Driver / POS / KDS / Admin) shipped as web (Dokploy + nginx) and native mobile (iOS / Android).
+The platform is built as **32 microservices** (plus a shared `tax` library) running on **Serverpod** (Dart), each owning its own **Postgres** database, deployed on a single **Dokploy VPS**, communicating via **Serverpod typed clients** (synchronous) and **NATS JetStream** (asynchronous via the outbox pattern). The 6 client surfaces are **Flutter apps** (Customer / Merchant / Driver / POS / KDS / Admin) shipped as web (Dokploy + nginx) and native mobile (iOS / Android).
 
 The build proceeds in **7 vertical-slice waves** (Wave 0 — Skeleton → Wave 6 — Public launch), with TDD / E2E / SOLID / DRY / KISS enforced by CI from Wave 0 onward. See ADR-0005.
 
@@ -44,9 +44,9 @@ The build proceeds in **7 vertical-slice waves** (Wave 0 — Skeleton → Wave 6
 | Concern                | Choice                                                                |
 | ---------------------- | --------------------------------------------------------------------- |
 | Service framework      | **Serverpod** (Dart on server) — one project per bounded context      |
-| Service decomposition  | **33 services** across 5 tiers (see §4)                               |
-| Database (per service) | **Postgres 16** — one database per service container                  |
-| Geospatial             | **PostGIS** extension on `geo` service's Postgres                     |
+| Service decomposition  | **32 services** + 1 shared `tax` library, across 5 tiers (see §4)     |
+| Database (per service) | **Postgres 18** (`pgvector/pgvector:pg18` image) — one database per service container |
+| Geospatial             | **PostGIS** required on `geo`'s Postgres (⚠ not yet in the shared `pgvector` image — infra gap) |
 | Migrations             | Serverpod migrations per service, independent cadence                 |
 | Inter-service sync     | Serverpod-generated typed HTTPS clients                               |
 | Inter-service async    | **NATS JetStream** — one stream per source service via outbox pattern |
@@ -113,7 +113,7 @@ Per ADR-0004 — these cannot be built or self-hosted.
  ║                            DOKPLOY VPS (single host)                                     ║
  ║                                                                                          ║
  ║   ┌────────────────────────────────────────────────────────────────────────────────┐     ║
- ║   │              33 SERVERPOD SERVICES — one container per service                 │     ║
+ ║   │              32 SERVERPOD SERVICES — one container per service                 │     ║
  ║   │                                                                                │     ║
  ║   │   Tier 0 — Foundation                                                          │     ║
  ║   │     identity · merchant · device · media · geo · config                        │     ║
@@ -139,7 +139,7 @@ Per ADR-0004 — these cannot be built or self-hosted.
  ║         │ sync REST    │ async events     │ object store   │ cache          │ secrets    ║
  ║         ▼              ▼                  ▼                ▼                ▼            ║
  ║   ┌──────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐    ║
- ║   │ 33×      │  │     NATS     │  │    MinIO     │  │    Valkey    │  │  Infisical  │    ║
+ ║   │ 32×      │  │     NATS     │  │    MinIO     │  │    Valkey    │  │  Infisical  │    ║
  ║   │ Postgres │  │  JetStream   │  │ S3-compatible│  │ Redis-compat │  │   secrets   │    ║
  ║   │ (one DB  │  │   (outbox    │  │   storage    │  │              │  │             │    ║
  ║   │ per svc) │  │    relay)    │  │              │  │              │  │             │    ║
@@ -172,7 +172,7 @@ Per ADR-0004 — these cannot be built or self-hosted.
 
 ---
 
-## 4. The 33-service catalog
+## 4. The 32-service catalog
 
 Quick reference. Full justification in **ADR-0003**.
 
@@ -225,7 +225,9 @@ Quick reference. Full justification in **ADR-0003**.
 | `apps/driver`   | Couriers (platform pool + in-house)    | 2                        | Light (poor coverage tolerance) |
 | `apps/admin`    | Platform operators                     | 5                        | None — online required          |
 
-All 6 apps build from one Flutter codebase, share `packages/ui` (design system from `DESIGN.md`), `packages/core` (Money/Currency/UuidV7/errors), `packages/i18n` (slang), `packages/sync` (offline mutation engine), and per-service generated Serverpod clients.
+All 6 apps build from one Flutter codebase and share the per-service generated Serverpod clients plus **`packages/backend`** — today the single shared package, holding the idempotency-key generator, typed error envelope, service registry, auth-key manager, config/URL resolver, and health dashboard.
+
+> **Doc vs. reality (Wave 0):** the planned split into `packages/ui` (design system, `DESIGN.md`), `packages/core` (Money/Currency/UUID v7/errors), `packages/i18n` (slang), and `packages/sync` (offline mutation engine, Wave 5) is **not yet created**. Those primitives currently live in `packages/backend`. `Money`/`Currency` do not exist yet at all — creating them is Wave 0 work.
 
 ---
 
@@ -464,7 +466,7 @@ Per ADR-0005 + ADR-0006. These apply to **every service**.
 - **SOLID at the service boundary.** One bounded reason to change per service. Adapters DI-injected. No service touches another service's DB or internals.
 - **DRY via `packages/*`.** Money, Currency, UUID v7, error envelopes, idempotency middleware, outbox writer, audit emitter, ledger primitives live as shared packages — never duplicated.
 - **KISS per wave.** No service or feature lands earlier than its wave. No speculative abstractions.
-- **Idempotency-key mandatory** on every mutating endpoint across all 33 services. 30-day server-side cache.
+- **Idempotency-key mandatory** on every mutating endpoint across all 32 services. 30-day server-side cache.
 - **UUID v7 primary keys everywhere.** Cloud-generated and offline-generated.
 - **Past-dated timestamps tolerated** on every mutating endpoint (with documented acceptance bounds).
 - **Outbox pattern** on every domain event. No event is emitted outside a transaction.
@@ -479,7 +481,7 @@ Per ADR-0005. Each wave deepens **every** service that it touches; we don't fini
 
 | Wave  | Theme                                     | What lands                                                                                                                                           |
 | ----- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0** | Skeleton walking                          | All 33 services scaffolded, all 33 Postgres DBs, full infra stack, CI/CD, observability, happy-path E2E. Stripe (test mode), email receipts.         |
+| **0** | Skeleton walking                          | All 32 services scaffolded, all 32 Postgres DBs, full infra stack, CI/CD, observability, happy-path E2E. Stripe (test mode), email receipts.         |
 | **1** | Restaurant vertical, US, dine-in & pickup | KDS service + app, Variants/Modifiers, Inventory tracking, Refunds, FCM/APNs push, POS app (online), Device pairing. Closed alpha with one Merchant. |
 | **2** | Marketplace + delivery                    | Driver app, `fulfillment` deep, `geo` deep, multi-merchant browse, multiple concurrent Carts, `search` (Meilisearch), Twilio SMS.                    |
 | **3** | Cash economy + first emerging market      | `wallet` active, Cash-on-Delivery + OTP, Cash-at-Pickup, EVC Plus, WhatsApp, Arabic + RTL, `kyc` providers, Driver cash float, Merchant Settlement.  |
@@ -496,11 +498,11 @@ Per ADR-0005. Each wave deepens **every** service that it touches; we don't fini
 | What does the domain _mean_? Canonical terms?           | `CONTEXT.md`                                             |
 | Why microservices instead of a monolith?                | `docs/adr/0001-microservices-with-serverpod.md`          |
 | Why one DB per service?                                 | `docs/adr/0002-database-per-service.md`                  |
-| Why these 33 services? Why is X folded into Y?          | `docs/adr/0003-service-catalog.md`                       |
+| Why these 32 services? Why is X folded into Y?          | `docs/adr/0003-service-catalog.md`                       |
 | Why cash flows, and why is Syria excluded?              | `docs/adr/0004-cash-economy-from-day-one.md`             |
 | Why vertical-slice waves? Why TDD-enforced from Wave 0? | `docs/adr/0005-vertical-slice-waves-and-discipline.md`   |
 | Why Drift + custom sync? Why UUID v7 everywhere?        | `docs/adr/0006-offline-pos-sync-model.md`                |
-| What's in Wave 0?                                       | `docs/prd/0001-wave-0-skeleton-walking.md` + GH issue #1 |
+| What's in Wave 0?                                       | GH issue [#1](https://github.com/zxcvbnmmohd/sorvete/issues/1) — Wave 0 PRD |
 | What does the UI look like?                             | `DESIGN.md`                                              |
 
 When this document conflicts with an ADR, the ADR wins. When this document conflicts with `CONTEXT.md` on domain terms, `CONTEXT.md` wins.

@@ -2,7 +2,7 @@
 
 ## Context
 
-ADR-0003 commits to 33 services + 1 shared library at production parity. The remaining question was *how* to build that — three methodologies were considered:
+ADR-0003 commits to 32 services + 1 shared library at production parity. The remaining question was *how* to build that — three methodologies were considered:
 
 - **(a) Big bang**: build every service to parity in parallel; launch when everything is done.
 - **(b) Depth-first**: one service finished before the next starts; ship in order of dependency tier.
@@ -16,7 +16,7 @@ ADR-0003 commits to 33 services + 1 shared library at production parity. The rem
 
 | Wave | Theme | New capability landing this wave |
 |---|---|---|
-| **0** | Skeleton walking | All 33 Serverpod projects scaffolded; all 33 Postgres DBs; Docker Compose + Dokploy deploy; CI/CD; LGTM observability + GlitchTip; Infisical secrets; NATS JetStream; minimum E2E happy path (1 Merchant, 1 Location, 3 Products, Stripe payment, email receipt). |
+| **0** | Skeleton walking | All 32 Serverpod projects scaffolded; all 32 Postgres DBs; Docker Compose + Dokploy deploy; CI/CD; LGTM observability + GlitchTip; Infisical secrets; NATS JetStream; minimum E2E happy path (1 Merchant, 1 Location, 3 Products, Stripe payment, email receipt). |
 | **1** | Restaurant vertical — US — dine-in & pickup | Variants, Modifiers, Inventory, KDS service + app, conditional prep state machine, Refunds, FCM/APNs push, Device pairing, POS app (online-only). One real restaurant in closed alpha. |
 | **2** | Delivery + marketplace + multi-merchant | Fulfillment + Driver app, geo + delivery zones, multi-merchant browse, multiple concurrent Carts, Search (Meilisearch), Twilio SMS, dropoff privacy gate. |
 | **3** | Cash economy + first emerging market | Wallet ledger live, Cash-on-Delivery + OTP, Cash-at-Pickup, EVC Plus mobile money, WhatsApp transport, Arabic + RTL, KYC (Sumsub + Smile + manual queue), Driver cash float + Remittance, Merchant Settlement. |

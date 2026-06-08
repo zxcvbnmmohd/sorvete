@@ -10,7 +10,7 @@ Syria specifically is excluded — Stripe forbids it, Twilio SMS to Syria is OFA
 
 1. **`payments` is built around a Payment Method Adapter pattern.** All adapters implement a uniform `(initiate, confirm, refund, reconcile)` interface. Launch adapters: `card_stripe`, `wallet_balance`, `cash_at_pickup`, `cash_on_delivery`, `mobile_money_evc` (EVC Plus / Hormuud), `mobile_money_zaad` (Zaad / Telesom), `mobile_money_mpesa` (M-Pesa, expansion-ready), `bank_transfer_local`. New countries arrive as configuration plus, where needed, new adapters.
 
-2. **`wallet` is its own service** (catalog #33) implementing a double-entry ledger. Customer, Merchant, and Driver wallets all live here. All movements are immutable `LedgerEntry` pairs inside a `LedgerTransaction`. `gift_cards` and stored-value balances are implemented on top of `wallet`.
+2. **`wallet` is its own service** (added to the service catalog — see ADR-0003) implementing a double-entry ledger. Customer, Merchant, and Driver wallets all live here. All movements are immutable `LedgerEntry` pairs inside a `LedgerTransaction`. `gift_cards` and stored-value balances are implemented on top of `wallet`.
 
 3. **OTP-on-delivery is mandatory** for `cash_on_delivery`. The Customer receives a numeric Order Completion Code at order placement; the Customer reads it to the Driver on handover; the Driver enters it; without a match, the Order does not close and `risk` is engaged.
 
