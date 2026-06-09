@@ -24,11 +24,14 @@
 **/*.freezed.dart
 **/lib/src/generated/
 
-# Shared packages/* commit their freezed/json_serializable output: it is small,
-# deterministic, and the melos analyze/test jobs + the web Docker build compile
-# these packages without running build_runner. Re-include only that output.
+# Shared packages/* commit their generated output (freezed/json_serializable
+# and Serverpod module protocol): it is small, deterministic, and the melos
+# analyze/test jobs + the web Docker build compile these packages without
+# running a generator. Services keep their Serverpod code regenerated-in-CI.
 !packages/**/*.g.dart
 !packages/**/*.freezed.dart
+!packages/**/lib/src/generated/
+!packages/**/lib/src/generated/**
 
 # --- Serverpod secrets (each service holds its own dev passwords) ---
 **/config/passwords.yaml

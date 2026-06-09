@@ -1,0 +1,11 @@
+name: sorvete_server_kit_client
+description: Generated Serverpod client for the sorvete_server_kit module.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+resolution: workspace
+
+dependencies:
+  serverpod_client: 3.4.9

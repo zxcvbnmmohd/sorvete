@@ -1,0 +1,17 @@
+### A cached idempotency result, keyed by client-supplied idempotency key.
+### Backs IdempotencyStore so a retried mutation replays its cached response
+### (ADR-0006 §4, 30-day window). Maps to/from IdempotencyEntry via
+### ServerpodIdempotencyCacheRepo.
+class: IdempotencyRecord
+table: sorvete_idempotency_cache
+fields:
+  ### The idempotency key (or "<consumer>:<eventId>" for consumer dedup).
+  key: String
+  ### JSON-encoded cached response; null for side-effect-only (consumer) keys.
+  value: String?
+  ### When the entry was stored (drives the expiry window).
+  storedAt: DateTime
+indexes:
+  sorvete_idempotency_key_idx:
+    fields: key
+    unique: true

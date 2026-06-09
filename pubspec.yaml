@@ -8,6 +8,7 @@ workspace:
   # Shared packages.
   - packages/core
   - packages/server_kit
+  - packages/server_kit_client
   - packages/backend
 
   # Per-service Serverpod packages (32 services × {client, server} = 64 entries).
@@ -191,8 +192,12 @@ melos:
       packageFilters:
         # Serverpod server/client own their own CI (test-server job): they use
         # the Serverpod toolchain (generate + DB) and a different SDK pin.
+        # Shared packages are the sorvete_* ones (core, backend, server_kit).
+        # Serverpod SERVICE servers/clients lack that prefix and own their CI
+        # (test-service job); generated *_client packages are excluded too.
+        scope:
+          - "sorvete_*"
         ignore:
-          - "*_server"
           - "*_client"
 
     test:
@@ -201,8 +206,8 @@ melos:
       # `integration`-tagged tests need live infra (e.g. NATS) and are excluded
       # here; run them with `dart test --tags integration` (or the e2e job).
       run: >
-        melos exec --flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- flutter test --exclude-tags integration &&
-        melos exec --no-flutter --dir-exists test --ignore "*_server" --ignore "*_client" -- dart test --exclude-tags integration
+        melos exec --flutter --dir-exists test --scope "sorvete_*" --ignore "*_client" -- flutter test --exclude-tags integration &&
+        melos exec --no-flutter --dir-exists test --scope "sorvete_*" --ignore "*_client" -- dart test --exclude-tags integration
       description: Run unit tests in all packages (flutter test + dart test by package type; excludes integration).
 
     test:coverage:
@@ -210,8 +215,12 @@ melos:
       description: Run tests with lcov coverage output per package.
       packageFilters:
         dirExists: test
+        # Shared packages are the sorvete_* ones (core, backend, server_kit).
+        # Serverpod SERVICE servers/clients lack that prefix and own their CI
+        # (test-service job); generated *_client packages are excluded too.
+        scope:
+          - "sorvete_*"
         ignore:
-          - "*_server"
           - "*_client"
 
     coverage:check:
@@ -226,16 +235,24 @@ melos:
       run: melos exec -- "dart format ."
       description: Format all packages.
       packageFilters:
+        # Shared packages are the sorvete_* ones (core, backend, server_kit).
+        # Serverpod SERVICE servers/clients lack that prefix and own their CI
+        # (test-service job); generated *_client packages are excluded too.
+        scope:
+          - "sorvete_*"
         ignore:
-          - "*_server"
           - "*_client"
 
     format:check:
       run: melos exec -- "dart format --set-exit-if-changed ."
       description: Check formatting without modifying files.
       packageFilters:
+        # Shared packages are the sorvete_* ones (core, backend, server_kit).
+        # Serverpod SERVICE servers/clients lack that prefix and own their CI
+        # (test-service job); generated *_client packages are excluded too.
+        scope:
+          - "sorvete_*"
         ignore:
-          - "*_server"
           - "*_client"
 
     sort-imports:

@@ -1,6 +1,6 @@
 import 'package:faker/faker.dart' hide Currency;
 import 'package:sorvete_core/sorvete_core.dart';
-import 'package:sorvete_server_kit/sorvete_server_kit.dart';
+import 'package:sorvete_server_kit_server/sorvete_server_kit_server.dart';
 import 'package:test/test.dart';
 
 void main() {

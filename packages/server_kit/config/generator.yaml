@@ -1,0 +1,5 @@
+type: module
+nickname: serverKit
+
+client_package_path: ../server_kit_client
+server_test_tools_path: test/integration/test_tools

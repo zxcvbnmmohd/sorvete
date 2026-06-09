@@ -1,0 +1,25 @@
+### A row in a service's outbox table — one domain event awaiting relay to NATS.
+### Written in the same transaction as the domain change (ADR §7). The relay
+### ships unpublished rows and stamps [publishedAt]. Maps to/from the in-memory
+### OutboxEvent in packages/core via ServerpodOutboxRepo.
+class: OutboxRecord
+table: sorvete_outbox
+fields:
+  ### Application-level event id (UUID v7); dedup key for consumers.
+  eventId: String
+  ### Event type, e.g. "OrderPlaced".
+  type: String
+  ### Aggregate root id the event is about.
+  aggregateId: String
+  ### Event time (event-time, may be past-dated for offline replay).
+  occurredAt: DateTime
+  ### JSON-encoded event payload.
+  payload: String
+  ### Null until the relay publishes the row to NATS.
+  publishedAt: DateTime?
+indexes:
+  sorvete_outbox_event_id_idx:
+    fields: eventId
+    unique: true
+  sorvete_outbox_published_at_idx:
+    fields: publishedAt

@@ -1,0 +1,6 @@
+analyzer:
+  exclude:
+    - lib/src/protocol/**
+
+formatter:
+  trailing_commas: preserve
