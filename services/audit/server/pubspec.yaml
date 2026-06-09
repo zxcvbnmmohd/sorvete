@@ -10,6 +10,8 @@ resolution: workspace
 
 dependencies:
   serverpod: 3.4.9
+  sorvete_server_kit_server:
+    path: ../../../packages/server_kit
   serverpod_auth_idp_server: 3.4.9
 
 dev_dependencies:

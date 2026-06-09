@@ -441,6 +441,13 @@ packages:
       relative: true
     source: path
     version: "0.0.0"
+  sorvete_server_kit_client:
+    dependency: transitive
+    description:
+      path: "../../packages/server_kit_client"
+      relative: true
+    source: path
+    version: "0.0.0"
   source_span:
     dependency: transitive
     description:
