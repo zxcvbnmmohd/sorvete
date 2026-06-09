@@ -17,3 +17,8 @@ export 'src/nats_bus.dart';
 export 'src/nats_protocol.dart';
 export 'src/outbox.dart';
 export 'src/outbox_relay.dart';
+
+// Serverpod-backed adapters + runtime bootstrap (used by service server.dart).
+export 'src/adapters/serverpod_idempotency_cache_repo.dart';
+export 'src/adapters/serverpod_outbox_repo.dart';
+export 'src/runtime/bootstrap.dart';

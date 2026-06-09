@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
+// Hide the module's generated Protocol/Endpoints — this service uses its own.
+import 'package:sorvete_server_kit_server/sorvete_server_kit_server.dart'
+    hide Endpoints, Protocol;
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
@@ -75,6 +78,16 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // Consume identity's events and record them (idempotent on event id).
+  await startEventConsumer(
+    pod: pod,
+    consumerName: 'audit-from-identity',
+    sourceSubject: 'outbox.identity',
+    handle: (session, event) async {
+      session.log('AUDIT recorded event ${event.id} (type=${event.type})');
+    },
+  );
 }
 
 void _sendRegistrationCode(
