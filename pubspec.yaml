@@ -227,6 +227,10 @@ melos:
       run: sh scripts/coverage_check.sh
       description: Run tests with coverage and fail if critical packages drop below threshold.
 
+    e2e:
+      run: sh scripts/e2e.sh
+      description: Cross-service async-rail E2E (identity relay + audit consumer) against Docker Postgres + NATS.
+
     clean:
       run: melos exec -- "flutter clean"
       description: Run flutter clean in all packages.

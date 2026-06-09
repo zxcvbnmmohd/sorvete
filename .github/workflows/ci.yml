@@ -139,6 +139,37 @@ jobs:
             apps/*/coverage/lcov.info
 
   # ----------------------------------------------------------------- #
+  # Cross-service async-rail E2E: boots the identity (relay) and audit   #
+  # (consumer) pilot services against real Postgres + NATS and drives a  #
+  # synthetic event through outbox -> relay -> NATS -> consumer ->       #
+  # idempotent record. Serverpod service code is gitignored, so generate #
+  # it on the runner first.                                              #
+  # ----------------------------------------------------------------- #
+  e2e:
+    name: Async-rail E2E
+    runs-on: ubuntu-latest
+    needs: [analyze, format]
+    env:
+      # Single dev password for the ephemeral Postgres + Serverpod process.
+      SERVICE_DB_PASSWORD: e2epass
+      SERVERPOD_PASSWORD_database: e2epass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate fvm
+      - run: fvm install
+      - run: fvm dart pub global activate melos
+      - run: fvm exec melos bootstrap
+      - name: Install Serverpod CLI
+        run: fvm dart pub global activate serverpod_cli $SERVERPOD_CLI_VERSION
+      - name: Generate identity + audit server code
+        run: |
+          (cd services/identity/server && fvm dart pub global run serverpod_cli:serverpod_cli generate)
+          (cd services/audit/server && fvm dart pub global run serverpod_cli:serverpod_cli generate)
+      - name: Run cross-service E2E
+        run: sh scripts/e2e.sh
+
+  # ----------------------------------------------------------------- #
   # Per-service Serverpod backends. Each service is an independent    #
   # Serverpod project with its own Postgres/Redis. The matrix         #
   # parallelizes one CI job per service: spin up containers, generate #
