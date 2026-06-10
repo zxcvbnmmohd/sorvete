@@ -1,0 +1,25 @@
+name: sorvete_server_kit_server
+description: >-
+  Server-side shared engine for Sorvete's Serverpod services, packaged as a
+  Serverpod module: the outbox writer/relay, idempotency store, and event
+  consumer (pure logic behind ports, unit-tested with no Postgres/NATS) plus
+  the Serverpod-backed table models, adapters, relay bootstrap, and the
+  dev/test-only emitTestEvent endpoint. The companion client is
+  ../server_kit_client.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+resolution: workspace
+
+dependencies:
+  serverpod: 3.4.9
+  sorvete_core:
+    path: ../core
+
+dev_dependencies:
+  serverpod_test: 3.4.9
+  test: any
+  faker: any
+  lints: any

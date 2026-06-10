@@ -18,26 +18,29 @@ class ServiceRegistry {
   factory ServiceRegistry.sorvete({String flavor = 'dev'}) {
     return ServiceRegistry(
       services: [
-        for (var i = 0; i < _serviceNames.length; i++)
-          (
-            name: _serviceNames[i],
-            baseUrl: _urlFor(_serviceNames[i], i, flavor),
-          ),
+        for (var i = 0; i < serviceNames.length; i++)
+          (name: serviceNames[i], baseUrl: _urlFor(serviceNames[i], i, flavor)),
       ],
     );
   }
+
+  /// Base host port for the dev per-service scheme: service at alphabetical
+  /// index `i` is exposed on `devPortBase + i` (matches `docker-compose.dev.yml`).
+  /// Single source of truth shared with [ServerpodConfig].
+  static const devPortBase = 8100;
 
   static String _urlFor(String service, int index, String flavor) {
     return switch (flavor) {
       'staging' => 'https://$service.staging.sorvete.app',
       'prod' => 'https://$service.sorvete.app',
-      _ => 'http://localhost:${8100 + index}',
+      _ => 'http://localhost:${devPortBase + index}',
     };
   }
 
   /// The 32 services from ADR-0003 — alphabetical so the dev-mode port slot
-  /// stays stable across the codebase.
-  static const _serviceNames = <String>[
+  /// stays stable across the codebase. Public so [ServerpodConfig] resolves
+  /// the same index → port mapping rather than duplicating the list.
+  static const serviceNames = <String>[
     'ads',
     'analytics',
     'audit',

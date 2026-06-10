@@ -1,50 +1,11 @@
 import 'package:serverpod_client/serverpod_client.dart';
+import 'package:sorvete_core/sorvete_core.dart';
 
-/// Typed error envelope all Sorvete apps consume.
+/// Translates whatever a Serverpod client throws into a typed [AppError]
+/// (defined in `packages/core`).
 ///
-/// Maps every error a `<svc>_client` call can surface into one of seven cases
-/// so UI layers can pattern-match rather than catching strings.
-sealed class AppError implements Exception {
-  const AppError(this.message, [this.cause]);
-  final String message;
-  final Object? cause;
-
-  @override
-  String toString() => '$runtimeType: $message';
-}
-
-final class UnauthenticatedError extends AppError {
-  const UnauthenticatedError([super.message = 'Not signed in', super.cause]);
-}
-
-final class ForbiddenError extends AppError {
-  const ForbiddenError([super.message = 'Not allowed', super.cause]);
-}
-
-final class ConflictError extends AppError {
-  const ConflictError([super.message = 'Conflicting write', super.cause]);
-}
-
-final class NotFoundError extends AppError {
-  const NotFoundError([super.message = 'Not found', super.cause]);
-}
-
-final class RateLimitedError extends AppError {
-  const RateLimitedError([super.message = 'Rate limited', super.cause]);
-}
-
-final class ServerError extends AppError {
-  const ServerError([super.message = 'Server error', super.cause]);
-}
-
-final class NetworkError extends AppError {
-  const NetworkError([super.message = 'Network error', super.cause]);
-}
-
-/// Translates whatever a Serverpod client throws into a typed [AppError].
-///
-/// Unrecognised errors fall through to [ServerError] so callers can still
-/// log them without crashing the UI.
+/// Unrecognised errors fall through to [ServerError] / [NetworkError] so
+/// callers can still log them without crashing the UI.
 AppError mapServerpodError(Object error) {
   if (error is AppError) return error;
 

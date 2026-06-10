@@ -2,7 +2,7 @@
 
 ## Context
 
-The POS app must operate offline for 1–8+ hours during network outages, in poor-coverage locations, and from food trucks / pop-ups on cellular hotspots. With 33 microservices each owning their own Postgres, no single "source of truth" exists to sync against — every domain (Orders, Payments, Wallet, Inventory, Catalog) has its own consistency requirements and its own conflict semantics. A uniform sync policy would be a lie; a per-entity policy is the only honest model.
+The POS app must operate offline for 1–8+ hours during network outages, in poor-coverage locations, and from food trucks / pop-ups on cellular hotspots. With 32 microservices each owning their own Postgres, no single "source of truth" exists to sync against — every domain (Orders, Payments, Wallet, Inventory, Catalog) has its own consistency requirements and its own conflict semantics. A uniform sync policy would be a lie; a per-entity policy is the only honest model.
 
 Decisions had to be made about: local-first DB engine, sync engine architecture, ID generation, idempotency, per-entity conflict policy, offline duration tolerance, offline card payment handling, and sync state UX in the POS app.
 
@@ -12,7 +12,7 @@ Decisions had to be made about: local-first DB engine, sync engine architecture,
 SQL semantics matching cloud entity shapes, reactive queries for UI binding, mature migration system, build_runner-integrated. Considered and rejected: Isar (maintainer-limbo, uncertain future), Hive (too lightweight for our shape), ObjectBox (licensing concerns).
 
 ### 2. Sync engine: **custom Dart package at `packages/sync`**
-Considered and rejected: PowerSync (OSS, Postgres-friendly) — assumes a single source-of-truth Postgres. With 33 separate databases across 33 services, PowerSync would require per-service sync-rule configuration and would surrender control over per-entity conflict policy. A custom engine — pull snapshots + push mutations with idempotency + subscribe to server-pushed changes via Serverpod streaming — fits our service shape and reuses the typed clients we already generate.
+Considered and rejected: PowerSync (OSS, Postgres-friendly) — assumes a single source-of-truth Postgres. With 32 separate databases across 32 services, PowerSync would require per-service sync-rule configuration and would surrender control over per-entity conflict policy. A custom engine — pull snapshots + push mutations with idempotency + subscribe to server-pushed changes via Serverpod streaming — fits our service shape and reuses the typed clients we already generate.
 
 The engine is built once in `packages/sync` and consumed by every offline-capable client (POS first; Driver and KDS later as their offline needs surface).
 
@@ -20,7 +20,7 @@ The engine is built once in `packages/sync` and consumed by every offline-capabl
 Time-ordered (DB-index-friendly), offline-safe, 128-bit collision-resistant, no central authority needed. Applies cloud-side too — every entity in every service uses UUID v7 primary keys. Consistency over premature optimization.
 
 ### 4. Idempotency: **mandatory client-supplied key on every mutating endpoint; server-stored for 30 days**
-The server stores `{idempotency_key → response}` and replays the cached response on duplicate calls. 30 days covers a worst-case offline duration (a POS unplugged over a long weekend). This is a non-negotiable contract from Wave 0 across all 33 services.
+The server stores `{idempotency_key → response}` and replays the cached response on duplicate calls. 30 days covers a worst-case offline duration (a POS unplugged over a long weekend). This is a non-negotiable contract from Wave 0 across all 32 services.
 
 ### 5. Per-entity conflict resolution policy: **server-side, per-entity, documented per service**
 
@@ -52,7 +52,7 @@ Card payments require online authorization. "Store-and-forward" offline card mod
 
 Per-entity conflict resolution is the only honest answer for a system where Orders need client-wins (the shop knows what happened) and Inventory needs server-wins (the cloud knows what's in stock). A uniform "last-write-wins" or uniform "server-wins" policy would lose either real money (orders not synced) or real trust (overselling never surfaced).
 
-Custom sync engine over PowerSync is justified because 33 separate Postgres databases break PowerSync's single-Postgres assumption, and because per-entity policies are easier to express in code we own than in a sync-rules DSL.
+Custom sync engine over PowerSync is justified because 32 separate Postgres databases break PowerSync's single-Postgres assumption, and because per-entity policies are easier to express in code we own than in a sync-rules DSL.
 
 UUID v7 client-side is the only ID strategy that survives offline generation without a central authority. Database-generated IDs would require a round-trip per insert, which is fatal for offline.
 

@@ -32,6 +32,13 @@ x-dev-backend: &dev-backend
     SERVERPOD_PASSWORD_database: ${DB_PASSWORD:?DB_PASSWORD must be set}
 
 services:
+  # Expose the NATS bus on the host so native dev apps and the server_kit
+  # integration test (`dart test --tags integration`) can reach it at
+  # nats://localhost:4222. Image/command/volume come from the base compose.
+  nats:
+    ports:
+      - "4222:4222"
+
   ads-server:
     <<: *dev-backend
     ports:

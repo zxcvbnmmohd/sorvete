@@ -1,0 +1,6 @@
+# Declares the `integration` tag used by tests that need live infrastructure
+# (e.g. a NATS server). These are excluded from the default `melos run test`
+# (which passes --exclude-tags integration) and run explicitly with:
+#   dart test --tags integration
+tags:
+  integration:

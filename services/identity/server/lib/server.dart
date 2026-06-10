@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
+// Hide the module's generated Protocol/Endpoints — this service uses its own.
+import 'package:sorvete_server_kit_server/sorvete_server_kit_server.dart'
+    hide Endpoints, Protocol;
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
@@ -75,6 +78,9 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // Ship this service's outbox events to NATS (ARCHITECTURE.md §7).
+  await startOutboxRelay(pod: pod, sourceService: 'identity');
 }
 
 void _sendRegistrationCode(
