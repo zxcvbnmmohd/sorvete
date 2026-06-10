@@ -50,8 +50,10 @@ docker compose up -d postgres >/dev/null
 ipsql() { docker compose exec -T postgres psql -U postgres -d identity -tAc "$1" 2>/dev/null; }
 
 NATS_URL="$NATS_URL" fvm dart bin/main.dart --apply-migrations >/tmp/e2e-identity.log 2>&1 &
+# Generous bound: the first `dart bin/main.dart` cold-compiles in CI before the
+# server boots + migrates. On failure, surface the server log.
 i=0; until [ "$(ipsql "select to_regclass('public.sorvete_outbox') is not null")" = t ]; do
-  i=$((i + 1)); [ "$i" -gt 120 ] && fail "identity did not migrate (see /tmp/e2e-identity.log)"; sleep 0.5
+  i=$((i + 1)); [ "$i" -gt 480 ] && { echo "--- identity log ---"; cat /tmp/e2e-identity.log; fail "identity did not migrate"; }; sleep 0.5
 done
 
 EVID1="e2e-relay-$$"
@@ -74,7 +76,7 @@ apsql() { docker compose exec -T postgres psql -U postgres -d audit -tAc "$1" 2>
 
 NATS_URL="$NATS_URL" fvm dart bin/main.dart --apply-migrations >/tmp/e2e-audit.log 2>&1 &
 i=0; until [ "$(apsql "select to_regclass('public.sorvete_idempotency_cache') is not null")" = t ]; do
-  i=$((i + 1)); [ "$i" -gt 120 ] && fail "audit did not migrate (see /tmp/e2e-audit.log)"; sleep 0.5
+  i=$((i + 1)); [ "$i" -gt 480 ] && { echo "--- audit log ---"; cat /tmp/e2e-audit.log; fail "audit did not migrate"; }; sleep 0.5
 done
 
 EVID2="e2e-consume-$$"
